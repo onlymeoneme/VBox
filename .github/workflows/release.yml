@@ -20,6 +20,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Init Submodules
+        run: git submodule update --init libcore
+
       - name: Golang Status
         run: find buildScript libcore/*.sh | xargs cat | sha1sum > golang_status
 
@@ -135,6 +138,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Init Submodules
+        run: git submodule update --init 'app/*'
+
       - name: Download LibCore Artifact
         uses: actions/download-artifact@v4
         with:
@@ -149,9 +155,6 @@ jobs:
         with:
           path: ~/.gradle
           key: gradle-play-${{ hashFiles('**/*.gradle.kts') }}
-
-      - name: Checkout Library
-        run: git submodule update --init 'app/*'
 
       - name: Gradle Build
         run: |
