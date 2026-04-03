@@ -19,9 +19,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Init Submodules
-        run: git submodule update --init libcore
+        with:
+          submodules: recursive   # ← инициализирует ВСЕ субмодули включая libcore
 
       - name: Golang Status
         run: find buildScript libcore/*.sh | xargs cat | sha1sum > golang_status
@@ -34,7 +33,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: app/libs/libcore.aar
-          key: ${{ hashFiles('.github/workflows/*', 'golang_status', 'libcore_status') }}
+          key: libcore-${{ hashFiles('golang_status', 'libcore_status') }}
 
       - name: Install Golang
         if: steps.cache.outputs.cache-hit != 'true'
@@ -45,6 +44,9 @@ jobs:
       - name: Native Build
         if: steps.cache.outputs.cache-hit != 'true'
         run: ./run lib core
+
+      - name: Verify LibCore built
+        run: ls -lh app/libs/libcore.aar
 
       - name: Upload LibCore Artifact
         uses: actions/upload-artifact@v4
@@ -68,7 +70,9 @@ jobs:
           path: app/libs/
 
       - name: Verify LibCore
-        run: ls -lh app/libs/libcore.aar
+        run: |
+          ls -lh app/libs/libcore.aar
+          echo "Size: $(stat -c%s app/libs/libcore.aar) bytes"
 
       - name: Gradle Cache
         uses: actions/cache@v4
@@ -137,9 +141,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Init Submodules
-        run: git submodule update --init 'app/*'
+        with:
+          submodules: recursive
 
       - name: Download LibCore Artifact
         uses: actions/download-artifact@v4
