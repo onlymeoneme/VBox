@@ -20,34 +20,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Golang Status
-        run: find buildScript libcore/*.sh | xargs cat | sha1sum > golang_status
-      - name: Libcore Status
-        run: git ls-files libcore | xargs cat | sha1sum > libcore_status
-
-      - name: LibCore Cache
-        id: cache
-        uses: actions/cache@v4
-        with:
-          path: app/libs/libcore.aar
-          key: ${{ hashFiles('.github/workflows/*', 'golang_status', 'libcore_status') }}
-
       - name: Install Golang
-        if: steps.cache.outputs.cache-hit != 'true'
         uses: actions/setup-go@v5
         with:
           go-version: ^1.25
 
       - name: Native Build
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: ./run lib core
+        run: |
+          ./run lib core
+          # Проверяем, что файл реально создался
+          ls -lh app/libs/libcore.aar
 
-      # --- ДОБАВЛЕНО: Сохраняем библиотеку как артефакт ---
       - name: Upload LibCore Artifact
         uses: actions/upload-artifact@v4
         with:
           name: libcore-aar
           path: app/libs/libcore.aar
+          retention-days: 1
 
   build:
     name: Build OSS APK
@@ -57,18 +46,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # --- ДОБАВЛЕНО: Скачиваем библиотеку из предыдущего шага ---
+      # ВЫКАЧИВАЕМ БИБЛИОТЕКУ, чтобы Kotlin её увидел
       - name: Download LibCore Artifact
         uses: actions/download-artifact@v4
         with:
           name: libcore-aar
           path: app/libs/
-
-      - name: Gradle cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.gradle
-          key: gradle-oss-${{ hashFiles('**/*.gradle.kts') }}
 
       - name: Gradle Build
         env:
@@ -130,21 +113,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # --- ДОБАВЛЕНО: Скачиваем библиотеку и сюда тоже ---
       - name: Download LibCore Artifact
         uses: actions/download-artifact@v4
         with:
           name: libcore-aar
           path: app/libs/
 
-      - name: Gradle cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.gradle
-          key: gradle-play-${{ hashFiles('**/*.gradle.kts') }}
       - name: Checkout Library
         run: |
           git submodule update --init 'app/*'
+
       - name: Gradle Build
         run: |
           echo "sdk.dir=${ANDROID_HOME}" > local.properties
