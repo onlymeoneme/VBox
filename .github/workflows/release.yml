@@ -130,12 +130,13 @@ jobs:
           echo "ndk.dir=${ANDROID_HOME}/ndk/25.0.8775105" >> local.properties
           export LOCAL_PROPERTIES="${{ secrets.LOCAL_PROPERTIES }}"
           ./run init action gradle
-          ./gradlew bundlePlayRelease- name: Sign APK
+          ./gradlew bundlePlayRelease
+      - name: Sign APK
         uses: r0adkll/sign-android-release@v1
         id: sign_app
         with:
           releaseDirectory: app/build/outputs/apk/oss/release
-          signingKeyBase64: ${{ secrets.KEYSTORE }}
+          signingKeyBase64: ${{ secrets.SINGING_KEY }}
           alias: ${{ secrets.KEY_ALIAS }}
           keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
           keyPassword: ${{ secrets.KEY_PASSWORD }}
